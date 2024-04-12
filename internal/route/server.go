@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/AntonCkya/banner-api/internal/cache"
 	"github.com/AntonCkya/banner-api/internal/db"
 	"github.com/AntonCkya/banner-api/internal/model"
 	"github.com/AntonCkya/banner-api/internal/token"
 )
 
-func UserBannerHandler(ctx context.Context, conn db.IConnect) http.HandlerFunc {
+func UserBannerHandler(ctx context.Context, conn db.IConnect, cacheConn cache.ICacheConnect) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		Query := r.URL.Query()
 
@@ -30,7 +32,7 @@ func UserBannerHandler(ctx context.Context, conn db.IConnect) http.HandlerFunc {
 			return
 		}
 		//TODO: кэш
-		//use_last_revision := Query.Get("use_last_revision")
+		use_last_revision := Query.Get("use_last_revision")
 		strToken := r.Header.Get("token")
 
 		t := token.New(strToken)
@@ -43,7 +45,26 @@ func UserBannerHandler(ctx context.Context, conn db.IConnect) http.HandlerFunc {
 			// наверное нужен третий класс недо-пользователей, но это уже звучит странно
 		}
 
+		contentTimeStr, err := cacheConn.GetContent(ctx, fmt.Sprintf("%d:%d", feature_id, tag_id))
+		if err == nil && use_last_revision == "false" {
+			var contentTime model.ContentTime
+			json.Unmarshal([]byte(contentTimeStr), &contentTime)
+
+			if time.Now().Sub(contentTime.Time).Minutes() > 5.0 {
+				cacheConn.DeleteContent(ctx, fmt.Sprintf("%d:%d", feature_id, tag_id))
+			} else {
+				w.WriteHeader(http.StatusOK)
+				js, _ := json.Marshal(contentTime.Body)
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(js)
+				return
+			}
+		}
+
 		content, err := conn.GetBanner(feature_id, tag_id, t.IsAdmin())
+
+		err = cacheConn.SetContent(ctx, fmt.Sprintf("%d:%d", feature_id, tag_id), content)
+
 		if errors.Is(err, model.ErrorNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`{"error": "Баннер не найден"}`))

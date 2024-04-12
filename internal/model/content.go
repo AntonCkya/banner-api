@@ -1,14 +1,22 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // баннер представляет собой  JSON-документ неопределенной структуры
 type Content map[string]interface{}
 
-func (c Content) MarshalBinary() ([]byte, error) {
+type ContentTime struct {
+	Body Content
+	Time time.Time
+}
+
+func (c ContentTime) MarshalBinary() ([]byte, error) {
 	return json.Marshal(c)
 }
 
-func (c Content) UnmarshalBinary(data []byte) error {
+func (c ContentTime) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &c)
 }

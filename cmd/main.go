@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/AntonCkya/banner-api/internal/cache"
 	"github.com/AntonCkya/banner-api/internal/db"
 	"github.com/AntonCkya/banner-api/internal/route"
 )
@@ -11,5 +12,6 @@ import (
 func main() {
 	ctx := context.Background()
 	conn := db.New()
-	http.ListenAndServe("localhost:8000", route.New(ctx, conn))
+	cacheConn := cache.New()
+	http.ListenAndServe("localhost:8000", route.New(ctx, conn, cacheConn))
 }
