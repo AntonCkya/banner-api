@@ -8,10 +8,15 @@ services:
     - '8080:8080'
     depends_on:
     - db
+    - redis
     environment:
       DB: "postgres://postgres:XD_120403_1000$@db:5432/banner?sslmode=disable"
+      REDISADDR: "redis:6379"
+      REDISPASS: ""
+      REDISDB: 0
   db:
     image: postgres:15.5
+    restart: always
     ports:
     - 5432:5432
     environment:
@@ -20,3 +25,13 @@ services:
       POSTGRES_PASSWORD: "XD_120403_1000$"
     volumes:
     - ./migrations/:/docker-entrypoint-initdb.d/
+  redis:
+    image: redis:latest
+    command: redis-server
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: 
+      REDIS_PORT: 6379
+      REDIS_DATABASES: 0
