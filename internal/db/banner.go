@@ -88,7 +88,6 @@ func (c *Connect) GetBanner(feature_id int, tag_id int, isAdmin bool) (model.Con
 	var content_str []byte
 	var is_active bool
 	row := c.Conn.QueryRow(getBannerQuery, feature_id, tag_id)
-	// оно не в строку не парсится :(((
 	err := row.Scan(&content_str, &is_active)
 	if errors.Is(err, sql.ErrNoRows) || (is_active == false && isAdmin == false) {
 		return model.Content{}, model.ErrorNotFound

@@ -17,8 +17,12 @@ type IConnect interface {
 	DeleteBanner(id int) error
 }
 
-func New() IConnect {
-	godotenv.Load("local.env")
+func New(isTest bool) IConnect {
+	if isTest {
+		godotenv.Load("../local.env")
+	} else {
+		godotenv.Load("local.env")
+	}
 	connURL := os.Getenv("DB")
 	db, _ := sql.Open("postgres", connURL)
 	c := Connect{

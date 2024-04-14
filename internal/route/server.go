@@ -63,8 +63,6 @@ func UserBannerHandler(ctx context.Context, conn db.IConnect, cacheConn cache.IC
 
 		content, err := conn.GetBanner(feature_id, tag_id, t.IsAdmin())
 
-		err = cacheConn.SetContent(ctx, fmt.Sprintf("%d:%d", feature_id, tag_id), content)
-
 		if errors.Is(err, model.ErrorNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(`{"error": "Баннер не найден"}`))
@@ -75,15 +73,22 @@ func UserBannerHandler(ctx context.Context, conn db.IConnect, cacheConn cache.IC
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		js, err := json.Marshal(content)
+
+		if string(js) == "{}" || string(js) == "" {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error": "Баннер не найден"}`))
+			return
+		}
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{"error": "Внутренняя ошибка сервера"}`))
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(js)
+		cacheConn.SetContent(ctx, fmt.Sprintf("%d:%d", feature_id, tag_id), content)
 	}
 }
 

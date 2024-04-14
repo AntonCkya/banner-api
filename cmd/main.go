@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	conn := db.New()
+	conn := db.New(false)
 	cacheConn := cache.New()
 	http.ListenAndServe("localhost:8000", route.New(ctx, conn, cacheConn))
 }
