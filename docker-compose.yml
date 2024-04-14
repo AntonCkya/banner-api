@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  app:
+    build: ./
+    command: ./banner-api
+    ports:
+    - '8080:8080'
+    depends_on:
+    - db
+    environment:
+      DB: "postgres://postgres:XD_120403_1000$@db:5432/banner?sslmode=disable"
+  db:
+    image: postgres:15.5
+    ports:
+    - 5432:5432
+    environment:
+      POSTGRES_DB: "banner"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "XD_120403_1000$"
+    volumes:
+    - ./migrations/:/docker-entrypoint-initdb.d/
